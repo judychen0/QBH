@@ -190,17 +190,76 @@
   c1->SaveAs(Form("/home/judy/ntuhep/QBH/graph/%s.png", title));
 
   TH1F *H_sieieFull5x5 = new TH1F("H_sieieFull5x5", "H_sieieFull5x5", 18, 0.003, 0.012);
+  H_sieieFull5x5->GetYaxis()->SetRangeUser(.0001, 1000000);
   t->Draw("sieieFull5x5>>H_sieieFull5x5");
   title = H_sieieFull5x5->GetName();
+  c1->SaveAs(Form("/home/judy/ntuhep/QBH/graph/%s.png", title));
   
   TH1F *H_r9Full5x5 = new TH1F("H_r9Full5x5", "H_r9Full5x5", 5, 0.5, 1);
+  H_r9Full5x5->GetYaxis()->SetRangeUser(.0001, 1000000);
   t->Draw("r9Full5x5>>H_r9Full5x5");
   title = H_r9Full5x5->GetName();
+  c1->SaveAs(Form("/home/judy/ntuhep/QBH/graph/%s.png", title));
   
   TH1F *H_HoverE = new TH1F("H_HoverE", "H_HoverE", 13, 0., 0.026);
+  H_HoverE->GetYaxis()->SetRangeUser(.0001, 1000000);
   t->Draw("HoverE>>H_HoverE");
+  title = H_HoverE->GetName();
+  c1->SaveAs(Form("/home/judy/ntuhep/QBH/graph/%s.png", title));
 
-  TH1F *H_chIso = new TH1F("H_chIso", "H_chIso", )
+  TH1F *H_chIso = new TH1F("H_chIso", "H_chIso", 15, 0, 0.6);
+  H_chIso->GetYaxis()->SetRangeUser(.0001, 1000000);
+  t->Draw("chIso>>H_chIso");
+  title = H_chIso->GetName();
+  c1->SaveAs(Form("/home/judy/ntuhep/QBH/graph/%s.png", title));
+
+  TH1F *H_phoIso = new TH1F("H_phoIso", "H_phoIso", 50, 0, 10);
+  H_phoIso->GetYaxis()->SetRangeUser(.0001, 1000000);
+  t->Draw("phoIso>>H_phoIso");
+  title = H_phoIso->GetName();
+  c1->SaveAs(Form("/home/judy/ntuhep/QBH/graph/%s.png", title));
+
+  TH1F *H_nhIso = new TH1F("H_nhIso", "H_nhIso", 29, 0, 81);
+  H_nhIso->GetYaxis()->SetRangeUser(.0001, 1000000);
+  t->Draw("nhIso>>H_nhIso");
+  title = H_nhIso->GetName();
+  c1->SaveAs(Form("/home/judy/ntuhep/QBH/graph/%s.png", title));
+
+  TH1F *H_jetCEF = new TH1F("H_jetCEF", "H_jetCEF", 40, 0, 1);
+  H_jetCEF->GetYaxis()->SetRangeUser(.0001, 1000000);
+  t->Draw("jetCEF>>H_jetCEF");
+  title = H_jetCEF->GetName();
+  c1->SaveAs(Form("/home/judy/ntuhep/QBH/graph/%s.png", title));
+
+  TH1F *H_jetNEF = new TH1F("H_jetNEF", "H_jetNEF", 40, 0, 1);
+  H_jetNEF->GetYaxis()->SetRangeUser(.0001, 1000000);
+  t->Draw("jetNEF>>H_jetCE");
+  title = H_jetNEF->GetName();
+  c1->SaveAs(Form("/home/judy/ntuhep/QBH/graph/%s.png", title));
+
+  TH1F *H_jetCHF = new TH1F("H_jetCHF", "H_jetCHF", 40, 0, 1);
+  H_jetCHF->GetYaxis()->SetRangeUser(.0001, 1000000);
+  t->Draw("jetCHF>>H_jetCHF");
+  title = H_jetCHF->GetName();
+  c1->SaveAs(Form("/home/judy/ntuhep/QBH/graph/%s.png", title));
+
+  TH1F *H_jetNHF = new TH1F("H_jetNHF", "H_jetNHF", 40, 0, 1);
+  H_jetNHF->GetYaxis()->SetRangeUser(.0001, 1000000);
+  t->Draw("jetNHF>>H_jetNHF");
+  title = H_jetNHF->GetName();
+  c1->SaveAs(Form("/home/judy/ntuhep/QBH/graph/%s.png", title));
+  
+  TH1F *H_jetNCH = new TH1F("H_jetNCH", "H_jetNCH", 100, 0, 100);
+  H_jetNCH->GetYaxis()->SetRangeUser(.0001, 1000000);
+  t->Draw("jetNCH>>H_jetNCH");
+  title = H_jetNCH->GetName();
+  c1->SaveAs(Form("/home/judy/ntuhep/QBH/graph/%s.png", title));
+  
+  TH1F *H_jetNNP = new TH1F("H_jetNNP", "H_jetNNP", 100, 0, 100);
+  H_jetNNP->GetYaxis()->SetRangeUser(.0001, 1000000);
+  t->Draw("jetNNP>>H_jetNNP");
+  title = H_jetNNP->GetName();
+  c1->SaveAs(Form("/home/judy/ntuhep/QBH/graph/%s.png", title));
   
   c1->SetLogy(0);
   c1->SetLogz();
