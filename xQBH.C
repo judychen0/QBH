@@ -55,6 +55,7 @@ void xQBH(){
   TH1F *h_dpt_pho = new TH1F("h_dpt_pho", "dpt of photon", 100, 0., 1);
   TH2F *h_dptdr_pho = new TH2F("h_dptdr_pho", "dptdr of photon", 100, 0., 1, 100, 0., 2);
   TH1F *h_nrealpho = new TH1F("h_nrealpho", "n real photon", 20, 0., 20);
+  TH1F *h_ngenpho = new TH1F("h_ngenpho", "n gen-matched pho", 20, 0., 20);
   
   TH1F *h_njetGen = new TH1F("h_njetGen", "n jetGen parton", 20, 0., 20);
   TH1F *h_dr_jet = new TH1F("h_dr_jet", "dr of jet", 100, 0., 1);
@@ -105,6 +106,10 @@ void xQBH(){
   h_pjmass_phobjet->Sumw2();
   h_realjet_HPT->Sumw2();
   h_realjet_SndPT->Sumw2();
+
+  TH1F *h_genphoEB_PT = new TH1F("h_genpho_EB", "genpho PT of EB", 70000, 0., 7000);
+  TH1F *h_genphoEB_eta = new TH1F("h_genphoEB_eta", "genpho eta of EB", 100, 0, 5);
+   
 
   //define branch variables
   Bool_t   isData;
@@ -246,16 +251,6 @@ void xQBH(){
       vector <Float_t> mmcEta;
       vector <Float_t> mmcPhi;
 
-      vector <Int_t> mc_QBHid;
-      vector <Float_t> mc_QBHMass;
-      Int_t nMCQBH = 0 ;
-      for(Int_t k=0; k<nMC; k++){
-	
-  	  h_MCQBHMass->Fill(mcMass[k]);
-  	  nMCQBH++;
-	
-      }
-
       //TLorentzVector genphoP4, genjetP4;
       
       //get mc photon id
@@ -270,7 +265,9 @@ void xQBH(){
 
       //create real pho list
       vector <Int_t> realpho_list;
+      vector <Int_t> genpho_list;
       Int_t nrealpho=0;
+      Int_t ngenpho=0;
       for(Int_t ipho=0; ipho < nPho; ipho++){
   	//if(phoEt[ipho] < 165.) continue;
   	isMatched     = -1;
@@ -288,7 +285,9 @@ void xQBH(){
   	    isMatched = 1;
   	    //printf("MC phomatched !");
   	    realpho_list.push_back(ipho);
+	    genpho_list.push_back(k);
   	    nrealpho++;
+	    ngenpho++;
   	    break;
   	  }
   	}
@@ -297,6 +296,7 @@ void xQBH(){
 
       h_nMCpho->Fill(nMCpho);
       h_nrealpho->Fill(nrealpho);
+      h_ngenpho->Fill(ngenpho);
       
       //get genjet id
       jetGenID = data.GetPtrInt("jetGenPartonID");
@@ -561,7 +561,7 @@ void xQBH(){
    	//printf("Efficiency : %i", ncjet)	
       }
 
-      //fill matched pho variables
+      //fill matched phoId & jetId par
 	for(Int_t ii=0; ii < nrealpho; ii++){
 	  Int_t ipho = realpho_list[ii];
 
@@ -608,7 +608,8 @@ void xQBH(){
   h_dpt_pho->Write();
   h_dptdr_pho->Write();
   h_nrealpho->Write();
-
+  h_ngenpho->Write();
+  
   h_njetGen->Write();
   h_dr_jet->Write();
   h_dpt_jet->Write();
