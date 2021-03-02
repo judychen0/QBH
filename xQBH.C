@@ -107,17 +107,27 @@ void xQBH(){
   h_realjet_HPT->Sumw2();
   h_realjet_SndPT->Sumw2();
 
-  TH1F *h_genphoEB_PT = new TH1F("h_genpho_EB", "genpho PT of EB", 70000, 0., 7000);
-  TH1F *h_genphoEB_eta = new TH1F("h_genphoEB_eta", "genpho eta of EB", 100, 0, 5);
-   
+  
+  TH1F *h_realphoEB_pt = new TH1F("h_realphoEB_pt", "gen-matched pho pt of EB", 80, 0., 4000);
+  TH1F *h_realphoEB_eta = new TH1F("h_realphoEB_eta", "gen-matched pho eta of EB", 100, 0, 5);
+  TH1F *h_chIso_rc = new TH1F("h_chIso_rc", "rho corrected chIso", 100, 0, 10);
+  TH1F *h_phoIso_rc = new TH1F("h_phoIso_rc", "rho corrected phoIso", 100, 0, 10);
+  TH1F *h_nhIso_rc = new TH1F("h_nhIso_rc", "rho corrected nhIso", 100, 0, 10);
 
+  TH1F *h_realphoEB_pt_L = new TH1F("h_realphoEB_pt_L", "gen-matched pho pt of EB with Loose cut", 80, 0., 4000);
+  TH1F *h_realphoEB_pt_M = new TH1F("h_realphoEB_pt_M", "gen-matched pho pt of EB with Medium cut", 80, 0., 4000);
+  TH1F *h_realphoEB_pt_T = new TH1F("h_realphoEB_pt_T", "gen-matched phopt of EB with Tight cut", 80, 0., 4000);
+  //TH1F *h_realphoEB_pt_01 = new TH1F("h_realphoEB_pt_01")
+  
+  
   //define branch variables
   Bool_t   isData;
   Int_t    run;
   Long64_t event;
   Float_t jetPt_, jetEta_, jetPhi_;
   Int_t   isMatched, isMatchedEle, isConverted;
-  Float_t HoverE, sieie, chIso, phoIso, nhIso, eleVeto;
+  Float_t HoverE, sieie, chIso, phoIso, nhIso, eleVeto, rho;
+  Float_t chIsoEB_L, chIsoEB_M, chIsoEB_T, phoIsoEB_L, phoIsoEB_M, phoIsoEB_T, nhIsoEB_L, nhIsoEB_M, nhIsoEB_T;
   Float_t sieieFull5x5, sipipFull5x5, sieipFull5x5, r9Full5x5, e2x2Full5x5, e5x5Full5x5;
   Float_t jetCEF_, jetNEF_, jetCHF_, jetNHF_;
   Int_t jetNCH_, jetNNP_;
@@ -187,7 +197,8 @@ void xQBH(){
     Float_t* phoSigmaIEtaIPhiFull5x5  = data.GetPtrFloat("phoSigmaIEtaIPhiFull5x5");
     Float_t* phoSigmaIPhiIPhiFull5x5  = data.GetPtrFloat("phoSigmaIPhiIPhiFull5x5");
     Float_t* phoR9Full5x5           = data.GetPtrFloat("phoR9Full5x5");
-    
+    Float_t  rho                    = data.GetFloat("rho");
+        
     Float_t* jetPt = data.GetPtrFloat("jetPt");
     Float_t* jetEta = data.GetPtrFloat("jetEta");
     Float_t* jetPhi = data.GetPtrFloat("jetPhi");
@@ -216,7 +227,8 @@ void xQBH(){
     Float_t* mcMomEta  =0;
     Float_t* mcMomPhi  =0;
     Float_t* mcMomE    =0;
-
+    Float_t* mcCalIsoDR04 =0;
+    
     Int_t*   jetGenID    = 0;
     Int_t*   jetGenMomID = 0;
     Float_t* jetGenJetPt    = 0;
@@ -242,8 +254,7 @@ void xQBH(){
       mcMomPt   = data.GetPtrFloat("mcMomPt");
       mcMomEta  = data.GetPtrFloat("mcMomEta");
       mcMomPhi  = data.GetPtrFloat("mcMomPhi");
-
-      //mcCalIsoDR04 = data.GetPtrFloat("mcCalIsoDR04");
+      mcCalIsoDR04 = data.GetPtrFloat("mcCalIsoDR04");
 
       vector <Int_t> match;
       vector <Int_t> converted;
@@ -257,17 +268,15 @@ void xQBH(){
       vector <Int_t> mc_phoid;
       Int_t nMCpho = 0;
       for(Int_t k=0; k < nMC; k++){
-  	if(mcPID[k] == 22 && mcPt[k] >= 15 && mcMomPID[k] <= 22 ){
+  	if(mcPID[k] == 22 && mcPt[k] >= 15 && abs(mcMomPID[k]) <= 22 ){
   	  mc_phoid.push_back(k);
   	  nMCpho++;
   	}
       }
 
-      //create real pho list
+      //create real pho list and gen pho list
       vector <Int_t> realpho_list;
-      vector <Int_t> genpho_list;
       Int_t nrealpho=0;
-      Int_t ngenpho=0;
       for(Int_t ipho=0; ipho < nPho; ipho++){
   	//if(phoEt[ipho] < 165.) continue;
   	isMatched     = -1;
@@ -285,9 +294,7 @@ void xQBH(){
   	    isMatched = 1;
   	    //printf("MC phomatched !");
   	    realpho_list.push_back(ipho);
-	    genpho_list.push_back(k);
-  	    nrealpho++;
-	    ngenpho++;
+	    nrealpho++;
   	    break;
   	  }
   	}
@@ -296,7 +303,59 @@ void xQBH(){
 
       h_nMCpho->Fill(nMCpho);
       h_nrealpho->Fill(nrealpho);
-      h_ngenpho->Fill(ngenpho);
+      //printf("h_nrealpho histo saved \n");
+      //h_ngenpho->Fill(ngenpho);
+
+      
+      //get rho corrected Iso
+      vector <Float_t> chIso_rc;
+      vector <Float_t> phoIso_rc;
+      vector <Float_t> nhIso_rc;
+      Float_t EAch[7] = {0.0112, 0.0108, 0.0106, 0.01002, 0.0098, 0.0089, 0.000087};
+      Float_t EAnh[7] = {0.0668, 0.1054, 0.0786, 0.0223, 0.0078, 0.0028, 0.0137};
+      Float_t EApho[7] = {0.1113, 0.0953, 0.0619, 0.0837, 0.1070, 0.1212, 0.1446};
+
+      for(Int_t ii=0; ii < nrealpho; ii++){
+	Int_t ipho = realpho_list[ii];
+	if(fabs(phoEta[ipho]) < 1.0){
+	  chIso_rc.push_back(phoPFChIso[ipho] - rho*EAch[0]);
+	  phoIso_rc.push_back(phoPFPhoIso[ipho] - rho*EApho[0]);
+	  nhIso_rc.push_back(phoPFNeuIso[ipho] - rho*EAnh[0]);
+	}
+	
+	else if(fabs(phoEta[ipho]) > 1.0 && fabs(phoEta[ipho]) < 1.479){
+	  chIso_rc.push_back(phoPFChIso[ipho] - rho*EAch[1]);
+	  phoIso_rc.push_back(phoPFPhoIso[ipho] - rho*EApho[1]);
+	  nhIso_rc.push_back(phoPFNeuIso[ipho] - rho*EAnh[1]);
+	}
+	else if(fabs(phoEta[ipho]) > 1.479 && fabs(phoEta[ipho]) < 2.0){
+	  chIso_rc.push_back(phoPFChIso[ipho] - rho*EAch[2]);
+	  phoIso_rc.push_back(phoPFPhoIso[ipho] - rho*EApho[2]);
+	  nhIso_rc.push_back(phoPFNeuIso[ipho] - rho*EAnh[2]);
+	}
+	else if(fabs(phoEta[ipho]) > 2.0 && fabs(phoEta[ipho]) < 2.2){
+	  chIso_rc.push_back(phoPFChIso[ipho] - rho*EAch[3]);
+	  phoIso_rc.push_back(phoPFPhoIso[ipho] - rho*EApho[3]);
+	  nhIso_rc.push_back(phoPFNeuIso[ipho] - rho*EAnh[3]);
+	}
+	else if(fabs(phoEta[ipho]) > 2.2 && fabs(phoEta[ipho]) < 2.3){
+	  chIso_rc.push_back(phoPFChIso[ipho] - rho*EAch[4]);
+	  phoIso_rc.push_back(phoPFPhoIso[ipho] - rho*EApho[4]);
+	  nhIso_rc.push_back(phoPFNeuIso[ipho] - rho*EAnh[4]);
+	}
+	else if(fabs(phoEta[ipho]) > 2.3 && fabs(phoEta[ipho]) < 2.4){
+	  chIso_rc.push_back(phoPFChIso[ipho] - rho*EAch[5]);
+	  phoIso_rc.push_back(phoPFPhoIso[ipho] - rho*EApho[5]);
+	  nhIso_rc.push_back(phoPFNeuIso[ipho] - rho*EAnh[5]);
+	}
+	else if(fabs(phoEta[ipho]) > 2.4){
+	  chIso_rc.push_back(phoPFChIso[ipho] - rho*EAch[6]);
+	  phoIso_rc.push_back(phoPFPhoIso[ipho] - rho*EApho[6]);
+	  nhIso_rc.push_back(phoPFNeuIso[ipho] - rho*EAnh[6]);
+	}
+	
+      }
+      
       
       //get genjet id
       jetGenID = data.GetPtrInt("jetGenPartonID");
@@ -337,7 +396,7 @@ void xQBH(){
       }
       h_nrealjet->Fill(nrealjet);
 
-      
+      /*
       //deltaR of genpho and genjet
       TLorentzVector genphoP4, genjetP4;
       for(Int_t nn=0; nn<nMCpho; nn++){
@@ -348,7 +407,7 @@ void xQBH(){
   	  h_dr_genphojet->Fill(genphoP4.DeltaR(genjetP4));
   	}
       }
-      
+      */
       
       //create c-jet list
       vector <Int_t> cjetGenid;
@@ -561,37 +620,78 @@ void xQBH(){
    	//printf("Efficiency : %i", ncjet)	
       }
 
-      //fill matched phoId & jetId par
-	for(Int_t ii=0; ii < nrealpho; ii++){
-	  Int_t ipho = realpho_list[ii];
+      
+      
 
-	  //phoR9 = phoR9[ipho];
-	  eleVeto = phoEleVeto[ipho];
-	  HoverE = phoHoverE[ipho];
+      //fill matched phoId & jetId par
+      for(Int_t ii=0; ii < nrealpho; ii++){
+	Int_t ipho = realpho_list[ii];
+	eleVeto = phoEleVeto[ipho];
+	HoverE = phoHoverE[ipho];
+	sieieFull5x5 = phoSigmaIEtaIEtaFull5x5[ipho];
+	sieipFull5x5 = phoSigmaIEtaIPhiFull5x5[ipho];
+	sipipFull5x5 = phoSigmaIPhiIPhiFull5x5[ipho];
+	r9Full5x5 = phoR9Full5x5[ipho];
+	
+	/*
 	  chIso = phoPFChIso[ipho];
 	  phoIso = phoPFPhoIso[ipho];
 	  nhIso = phoPFNeuIso[ipho];
-	  sieieFull5x5 = phoSigmaIEtaIEtaFull5x5[ipho];
-	  sieipFull5x5 = phoSigmaIEtaIPhiFull5x5[ipho];
-	  sipipFull5x5 = phoSigmaIPhiIPhiFull5x5[ipho];
-	  r9Full5x5 = phoR9Full5x5[ipho];
+	*/
+	
+	
+	chIso = chIso_rc[ipho];
+	phoIso = phoIso_rc[ipho];
+	nhIso = nhIso_rc[ipho];
+	
+	
+	//phoR9 = phoR9[ipho];
+	
+	
+	for(Int_t jj=0; jj < nrealjet; jj++){
+	  Int_t ijet = realjet_list[jj];
+	  if(jj != 0) continue;
+	  jetCEF_ = jetCEF[ijet];
+	  jetNEF_ = jetNEF[ijet];
+	  jetCHF_ = jetCHF[ijet];
+	  jetNHF_ = jetNHF[ijet];
+	  jetNCH_ = jetNCH[ijet];
+	  jetNNP_ = jetNNP[ijet];
+	}
+	outtree_->Fill();
+	
+	
+	h_realphoEB_pt->Fill(phoEt[ipho]);
+	h_chIso_rc->Fill(chIso);
+	h_phoIso_rc->Fill(phoIso);
+	h_nhIso_rc->Fill(nhIso);
 
-	  for(Int_t jj=0; jj < nrealjet; jj++){
-	    Int_t ijet = realjet_list[jj];
-	    if(jj != 0) continue;
-	    jetCEF_ = jetCEF[ijet];
-	    jetNEF_ = jetNEF[ijet];
-	    jetCHF_ = jetCHF[ijet];
-	    jetNHF_ = jetNHF[ijet];
-	    jetNCH_ = jetNCH[ijet];
-	    jetNNP_ = jetNNP[ijet];
-	  }
-	  outtree_->Fill();
+	//Loose EB cut (Fall2017)
+	chIsoEB_L = 1.694;
+	phoIsoEB_L = 2.876 + 0.004017*phoEt[ipho];
+	nhIsoEB_L = 24.032 + 0.01512*phoEt[ipho] + (2.259*phoEt[ipho]*phoEt[ipho])/100000;
+	if( HoverE < 0.04596 && sieieFull5x5 < 0.0106 && chIso < chIsoEB_L && phoIso < phoIsoEB_L && nhIso < nhIsoEB_L ){
+	  h_realphoEB_pt_L->Fill(phoEt[ipho]);
 	}
 
+	//Medium EB cut (Fall2017)
+	chIsoEB_M = 1.141;
+	phoIsoEB_M = 2.08 + 0.004017*phoEt[ipho];
+	nhIsoEB_M = 1.189 + 0.01512*phoEt[ipho] + (2.259*phoEt[ipho]*phoEt[ipho])/100000;
+	if( HoverE < 0.02197 && sieieFull5x5 < 0.01015 && chIso < chIsoEB_M && phoIso < phoIsoEB_M && nhIso < nhIsoEB_M ){
+	  h_realphoEB_pt_M->Fill(phoEt[ipho]);
+       	}
+
+	//Tight EB cut (Fall2017)
+	chIsoEB_T = 0.65;
+	phoIsoEB_T = 2.044 + 0.004017*phoEt[ipho];
+	nhIsoEB_T = 0.317 + 0.01512*phoEt[ipho] + 2.259*phoEt[ipho]*phoEt[ipho]/100000;
+	if( HoverE < 0.02148 && sieieFull5x5 < 0.0996 && chIso < chIsoEB_T && phoIso < phoIsoEB_T && nhIso < nhIsoEB_T ){
+	  h_realphoEB_pt_T->Fill(phoEt[ipho]);
+	}
+      }
       
     }
-    
   }
   //****************END LOOP**********************//
 
@@ -638,6 +738,14 @@ void xQBH(){
   h_realjet_SndPT->Write();
   h_dr_genphojet->Write();
   //h_ctageff->Write();
+
+  h_realphoEB_pt->Write();
+  h_chIso_rc->Write();
+  h_phoIso_rc->Write();
+  h_nhIso_rc->Write();
+  h_realphoEB_pt_L->Write();
+  h_realphoEB_pt_M->Write();
+  h_realphoEB_pt_T->Write();
   
   fout_->Close();
   fprintf(stderr, "Processed all events\n");
